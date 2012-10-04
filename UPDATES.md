@@ -1,3 +1,6 @@
+##0.4a##
+__[added]__ some functioning commands, and a hidden command: __echo__. commands now accept arguments.
+
 ##0.3a##
 __[improved]__ Splash screen and boot process.
 

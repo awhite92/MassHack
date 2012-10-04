@@ -18,6 +18,10 @@
 		termLines = {}
 		showInput = false
 		
+		userInput = ""
+		placementKey = "_"
+		keyTimer = 0
+		
 		-- load all the sounds
 		startSound = audio.newSource("res/startup.ogg", stream)
 		
@@ -32,8 +36,8 @@
 			}
 		
 		mapText = {
-			{ caption = "", content = ""},
-			{ caption = "", content = ""}
+			{ title = "", content = ""},
+			{ title = "", content = ""}
 			}
 		
 		-- setup the fonts
@@ -48,7 +52,7 @@
 		for id = 1, #termLines, 1 do
 			gfx.print(termLines[id], 10, 10 + (id-1) * lineSpace)
 		end
-		if showInput then gfx.print("root@MassHack#:_", 10, 10 + (#termLines) * lineSpace) end
+		if showInput then gfx.print("root@MassHack#:" .. userInput..placementKey, 10, 10 + (#termLines) * lineSpace) end
 	end
 	
 	function pushLine(lineText)
@@ -64,6 +68,15 @@
 		
 		if fLineY > winH then
 			fLineY = winH*3*-1
+		end
+		
+		-- flash placement key -- this is also temp, it needs to be an image and the user should be able to move arround with the arrow keys
+		keyTimer = keyTimer + 1 * dt
+		if keyTimer >= .5 then
+			keyTimer = 0
+			if placementKey == "_" then
+				placementKey = ""
+			else placementKey = "_" end
 		end
 		
 		if gameState == "startup" then
@@ -87,11 +100,11 @@
 					termLines[1] = "loading Linux Kernel v3.6r7........................................... [Done]"
 					pushLine("Connecting to external IP...")
 				elseif stateID == 5 then 
-					stateNext = .4
+					stateNext = .2
 					termLines[2] = "Connecting to external IP............................................. [Done]"
 					pushLine("Masking IP and rerouting...")
 				elseif stateID == 6 then 
-					stateNext = .7
+					stateNext = 1
 					termLines[3] = "Masking IP and rerouting.............................................. [Done]"
 					pushLine("Auto Logging In...")
 				elseif stateID == 7 then 
@@ -112,16 +125,16 @@
 		gameState = "mainMenu"
 		showInput = true
 		clearLines()
-		pushLine("Welcom To MASS Hack v 0.3a")
+		pushLine("Welcom To MASS Hack v 0.4a")
 		pushLine("This version is still under heavy development, and is subject to change.")
 		pushLine("type help for a list of commands.")
-		pushLine("-------------------------------------")
 		addHelpLines()
 	end
 	
 	function addHelpLines()
-		pushLine("Help - these are not avalible as of yet.")
-		pushLine("help      levels      options")
+		pushLine("-------------------------------------")
+		pushLine("List of commands.")
+		pushLine("help      start      options")
 		pushLine("exit      clear")
 		pushLine("-------------------------------------")
 	end
@@ -176,8 +189,42 @@
 	function love.keypressed(key)
 		if gameState == "mainMenu" then
 		
-			gameState = "mapTest" -- accepts an 'any key'
-			
+			-- accepting users input
+			if key == "backspace" then
+				if userInput:len() > 0 then -- well, you cant get rid of nothing, but this is going to have to be much more dynamic later..
+					userInput = string.sub(userInput, 0,userInput:len()-1)
+				end
+			elseif key == "return" then -- trying to do something!
+				-- add the line and the users input
+				pushLine("root@MassHack#:" .. userInput)
+				
+				-- find the "space" 
+				com = userInput
+				if com:find(" ") ~= nil then
+					com = com:sub(0,(com:find(" ")-1))
+				end
+				-- check for commands -- and later check for pramaters
+				if com == "clear" then
+					clearLines()
+				elseif com == "help" then
+					addHelpLines()
+				elseif com == "start" then
+					gameState = "mapTest"
+					
+				elseif com == "echo" then -- just for kicks..
+					pushLine(userInput:sub(6))
+				elseif com == "exit" then
+					-- do some awesome exiting stuff :D
+					love.event.quit()
+				else
+					pushLine(com.." is not a valid command.")
+				end
+				userInput = ""
+			elseif key == "escape" then
+				-- idk yet
+			elseif key:len() == 1 then -- make sure to cover al' the other 'special' keys
+				userInput = userInput .. key
+			end
 			
 			
 		elseif gameState == "startup" then
